@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slack Integration — Apex Agents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-platinum: #e5e4e2;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            transition: all 250ms ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--accent-purple);
+            background: var(--bg-tertiary);
+        }
+
+        .nav-link.active {
+            color: var(--text-primary);
+            border-left-color: var(--accent-pink);
+            background: var(--bg-tertiary);
+        }
+
+        /* Main */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Content */
+        .content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: all 250ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.15);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple);
+            font-size: 16px;
+        }
+
+        /* Status Section */
+        .status-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 250ms ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), #c724ff);
+            color: white;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.5), 0 0 40px rgba(199, 36, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Form Section */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select {
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        /* Alerts Settings */
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .alert-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-info {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .alert-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 40px;
+            height: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .toggle.active {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 10px;
+            top: 2px;
+            left: 2px;
+            transition: left 200ms ease;
+        }
+
+        .toggle.active::after {
+            left: 18px;
+        }
+
+        /* Channel Select */
+        .channel-select {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .channel-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 200ms ease;
+            text-align: center;
+        }
+
+        .channel-card:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.05);
+        }
+
+        .channel-card.selected {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.15);
+        }
+
+        .channel-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .channel-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Preview */
+        .slack-preview {
+            background: linear-gradient(135deg, #36C5F0, #2EB67D);
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            color: white;
+        }
+
+        .slack-message {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 12px;
+            font-family: 'Monaco', monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .main {
+                margin-left: 60px;
+                padding: 24px;
+            }
+
+            .channel-select {
+                grid-template-columns: 1fr;
+            }
+
+            .status-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 500ms ease forwards;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 100ms;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Apex</div>
+            </div>
+            <nav>
+                <a href="account_dashboard_premium.html" class="nav-link">Dashboard</a>
+                <a href="batch_import.html" class="nav-link">Batch Import</a>
+                <a href="custom_fields.html" class="nav-link">Custom Fields</a>
+                <a href="scoring_breakdown.html" class="nav-link">Scoring</a>
+                <a href="email_tracking_dashboard.html" class="nav-link">Email Tracking</a>
+                <a href="#" class="nav-link active">Slack</a>
+                <a href="#" class="nav-link">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h1 class="page-title">Slack Integration</h1>
+                <p class="page-subtitle">Get real-time alerts for hot leads directly in Slack</p>
+            </div>
+
+            <div class="content">
+                <!-- Main Settings -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">⚙️</div>
+                        Configuration
+                    </div>
+
+                    <!-- Status -->
+                    <div class="status-section">
+                        <div class="status-info">
+                            <div class="status-indicator"></div>
+                            <div class="status-text">
+                                <div class="status-label">Connected to Slack</div>
+                                <div class="status-desc">apex-agents · Workspace</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-danger">Disconnect</button>
+                    </div>
+
+                    <!-- Channel Selection -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label class="form-label">Primary Alert Channel</label>
+                            <div class="channel-select">
+                                <div class="channel-card selected" onclick="selectChannel(this)">
+                                    <div class="channel-icon">#</div>
+                                    <div class="channel-name">#hot-leads</div>
+                                </div>
+                                <div class="channel-card" onclick="selectChannel(this)">
+                                    <div class="channel-icon">#</div>
+                                    <div class="channel-name">#sales-team</div>
+                                </div>
+                                <div class="channel-card" onclick="selectChannel(this)">
+                                    <div class="channel-icon">#</div>
+                                    <div class="channel-name">#conversions</div>
+                                </div>
+                                <div class="channel-card" onclick="selectChannel(this)">
+                                    <div class="channel-icon">#</div>
+                                    <div class="channel-name">#general</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backup Channel -->
+                        <div class="form-group">
+                            <label class="form-label">Backup Channel (Optional)</label>
+                            <select class="form-select">
+                                <option>Select a channel...</option>
+                                <option>#sales-team</option>
+                                <option>#conversions</option>
+                                <option>#general</option>
+                            </select>
+                        </div>
+
+                        <!-- Thread for Context -->
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked style="width: 16px; height: 16px;">
+                                <span style="font-size: 13px;">Group related alerts by lead in threads</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="slack-preview">
+                        <div style="font-weight: 600; margin-bottom: 8px;">Preview of Slack Message</div>
+                        <div class="slack-message">
+🔥 HOT LEAD: Sarah Chen (VP Operations)
+Company: TechVenture Labs | Score: 87/100
+Opened 8/10 emails · 3x pricing page visits
+→ Schedule call within 2 hours for best conversion
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alert Preferences -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">🔔</div>
+                        Alert Preferences
+                    </div>
+
+                    <div class="alerts-list">
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Hot Leads (Score 75+)</div>
+                                <div class="alert-desc">Immediate notification for top-tier leads</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleAlert(this)"></div>
+                        </div>
+
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Email Opens</div>
+                                <div class="alert-desc">When a lead opens 3+ emails in 24 hours</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleAlert(this)"></div>
+                        </div>
+
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Website Visits</div>
+                                <div class="alert-desc">When a lead visits pricing or demo pages</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleAlert(this)"></div>
+                        </div>
+
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Batch Import Complete</div>
+                                <div class="alert-desc">Notification when lead imports finish</div>
+                            </div>
+                            <div class="toggle" onclick="toggleAlert(this)"></div>
+                        </div>
+
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Score Changes</div>
+                                <div class="alert-desc">When a lead's score increases by 20+ points</div>
+                            </div>
+                            <div class="toggle" onclick="toggleAlert(this)"></div>
+                        </div>
+
+                        <div class="alert-item">
+                            <div class="alert-info">
+                                <div class="alert-title">Daily Summary</div>
+                                <div class="alert-desc">End-of-day recap at 6 PM (adjustable)</div>
+                            </div>
+                            <div class="toggle active" onclick="toggleAlert(this)"></div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 12px; margin-top: 24px;">
+                        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                        <button class="btn btn-secondary" onclick="testNotification()">Send Test Alert</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function selectChannel(element) {
+            document.querySelectorAll('.channel-card').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        function toggleAlert(element) {
+            element.classList.toggle('active');
+        }
+
+        function saveSettings() {
+            alert('Settings saved! Your Slack integration is now updated.');
+        }
+
+        function testNotification() {
+            alert('Test notification sent to #hot-leads channel!');
+        }
+    </script>
+</body>
+</html>

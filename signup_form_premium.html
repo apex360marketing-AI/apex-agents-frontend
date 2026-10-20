@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Your Free Lead Score — Apex Agents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-platinum: #e5e4e2;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+
+        /* Left Side - Value Prop */
+        .value-side {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1c1c26 100%);
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .value-side::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .value-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 60px;
+        }
+
+        .value-headline {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .value-subheadline {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 48px;
+        }
+
+        /* Benefits List */
+        .benefits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .benefit-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .benefit-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .benefit-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .benefit-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .benefit-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Right Side - Form */
+        .form-side {
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-header {
+            margin-bottom: 40px;
+        }
+
+        .form-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .form-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input,
+        .form-select {
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 250ms ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            background: var(--bg-tertiary);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        /* Two Column Grid */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Radio Group */
+        .radio-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .radio-option {
+            position: relative;
+        }
+
+        .radio-option input {
+            display: none;
+        }
+
+        .radio-label {
+            display: block;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 200ms ease;
+        }
+
+        .radio-option input:checked + .radio-label {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            margin-top: 4px;
+            cursor: pointer;
+            accent-color: var(--accent-purple);
+            flex-shrink: 0;
+        }
+
+        .checkbox-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .checkbox-text a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        .checkbox-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* CTA Button */
+        .btn-submit {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--accent-purple), #c724ff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 250ms ease;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+            margin-top: 12px;
+        }
+
+        .btn-submit:hover {
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.5), 0 0 40px rgba(199, 36, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Trust Signals */
+        .trust-signals {
+            display: flex;
+            gap: 24px;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .signal-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .signal-icon {
+            font-size: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .value-side {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                padding: 40px;
+                min-height: auto;
+                display: block;
+            }
+
+            .form-side {
+                padding: 40px;
+            }
+
+            .two-column,
+            .radio-group {
+                grid-template-columns: 1fr;
+            }
+
+            .trust-signals {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .value-side,
+            .form-side {
+                padding: 24px;
+            }
+
+            .value-headline {
+                font-size: 28px;
+            }
+
+            .form-title {
+                font-size: 24px;
+            }
+
+            .benefits-list {
+                gap: 16px;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .value-content {
+            animation: slideInUp 600ms ease forwards;
+        }
+
+        .form-header {
+            animation: slideInUp 600ms ease forwards;
+            animation-delay: 100ms;
+        }
+
+        .form {
+            animation: slideInUp 600ms ease forwards;
+            animation-delay: 200ms;
+        }
+
+        /* Loading State */
+        .btn-submit.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Side -->
+        <div class="value-side">
+            <div class="value-content">
+                <div class="logo">Apex</div>
+                <h1 class="value-headline">Score Your Leads in Real Time</h1>
+                <p class="value-subheadline">
+                    Identify hot prospects automatically. Get AI-powered confidence scores that tell you exactly which leads are ready to buy — today.
+                </p>
+
+                <div class="benefits-list">
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🎯</div>
+                        <div class="benefit-text">
+                            <div class="benefit-title">87% Accuracy</div>
+                            <div class="benefit-desc">Proven AI model trained on 50,000+ real deals</div>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">⚡</div>
+                        <div class="benefit-text">
+                            <div class="benefit-title">Real-Time Alerts</div>
+                            <div class="benefit-desc">Get notified instantly when hot leads emerge</div>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">📊</div>
+                        <div class="benefit-text">
+                            <div class="benefit-title">Transparent Scoring</div>
+                            <div class="benefit-desc">See exactly why each lead scores the way it does</div>
+                        </div>
+                    </div>
+
+                    <div class="benefit-item">
+                        <div class="benefit-icon">🚀</div>
+                        <div class="benefit-text">
+                            <div class="benefit-title">48-Hour Delivery</div>
+                            <div class="benefit-desc">Get your first audit within 2 days of signup</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side -->
+        <div class="form-side">
+            <div class="form-header">
+                <h2 class="form-title">Get Started Free</h2>
+                <p class="form-subtitle">14-day trial. No credit card required. Cancel anytime.</p>
+            </div>
+
+            <form class="form" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" placeholder="John Smith" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Work Email</label>
+                    <input type="email" class="form-input" placeholder="john@company.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" class="form-input" placeholder="Acme Corp" required>
+                </div>
+
+                <div class="two-column">
+                    <div class="form-group">
+                        <label class="form-label">Company Size</label>
+                        <select class="form-select" required>
+                            <option value="">Select size...</option>
+                            <option>1-10</option>
+                            <option>11-50</option>
+                            <option>51-200</option>
+                            <option>201-500</option>
+                            <option>500+</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Industry</label>
+                        <select class="form-select" required>
+                            <option value="">Select industry...</option>
+                            <option>SaaS</option>
+                            <option>Fintech</option>
+                            <option>E-commerce</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">How Many Leads Do You Score Monthly?</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="leads1" name="leads" value="0-500">
+                            <label for="leads1" class="radio-label">0–500</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="leads2" name="leads" value="500-5000">
+                            <label for="leads2" class="radio-label">500–5K</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="leads3" name="leads" value="5000-10000">
+                            <label for="leads3" class="radio-label">5K–10K</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="leads4" name="leads" value="10000+">
+                            <label for="leads4" class="radio-label">10K+</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" class="checkbox" required>
+                        <label for="terms" class="checkbox-text">
+                            I agree to the <a href="#" target="_blank">Terms of Service</a> and <a href="#" target="_blank">Privacy Policy</a>
+                        </label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="marketing" class="checkbox">
+                        <label for="marketing" class="checkbox-text">
+                            Send me tips on lead scoring and AI insights (2x/week)
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Get Your Free Score → </button>
+
+                <div class="trust-signals">
+                    <div class="signal-item">
+                        <span class="signal-icon">✓</span>
+                        <span>30-second setup</span>
+                    </div>
+                    <div class="signal-item">
+                        <span class="signal-icon">✓</span>
+                        <span>No credit card</span>
+                    </div>
+                    <div class="signal-item">
+                        <span class="signal-icon">✓</span>
+                        <span>Instant access</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const window_APEX_API_URL = 'http://localhost:8000';
+
+        function handleSubmit(e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('.btn-submit');
+
+            const data = {
+                name: formData.get('name') || document.querySelector('input[placeholder*="John"]').value,
+                email: formData.get('email') || document.querySelector('input[type="email"]').value,
+                company: formData.get('company') || document.querySelector('input[placeholder*="Acme"]').value,
+                company_size: document.querySelector('select').value,
+                industry: document.querySelectorAll('select')[1].value,
+                monthly_leads: document.querySelector('input[name="leads"]:checked')?.value,
+                vertical: document.querySelector('select[required]')?.value || 'saas'
+            };
+
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = 'Setting up...';
+
+            fetch(`${window_APEX_API_URL}/api/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.trial_id) {
+                    window.location.href = `/account_dashboard_premium.html?trial_id=${data.trial_id}`;
+                } else {
+                    alert('Success! Check your email for next steps.');
+                    form.reset();
+                    submitBtn.classList.remove('loading');
+                    submitBtn.textContent = 'Get Your Free Score → ';
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Something went wrong. Please try again.');
+                submitBtn.classList.remove('loading');
+                submitBtn.textContent = 'Get Your Free Score → ';
+            });
+        }
+    </script>
+</body>
+</html>

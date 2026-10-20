@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoring Breakdown — Apex Agents</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-platinum: #e5e4e2;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            transition: all 250ms ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--accent-purple);
+            background: var(--bg-tertiary);
+        }
+
+        .nav-link.active {
+            color: var(--text-primary);
+            border-left-color: var(--accent-pink);
+            background: var(--bg-tertiary);
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 250ms ease;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        /* Content */
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: all 250ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.15);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple);
+            font-size: 16px;
+        }
+
+        /* Score Display */
+        .score-display {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--accent-purple) 0deg,
+                var(--accent-purple) 180deg,
+                var(--accent-pink) 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.3);
+            position: relative;
+        }
+
+        .score-inner {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-value {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .score-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .score-grade {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .grade-hot {
+            color: var(--accent-pink);
+        }
+
+        .grade-warm {
+            color: var(--warning);
+        }
+
+        .grade-cold {
+            color: var(--text-secondary);
+        }
+
+        /* Signal Breakdown Table */
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .signals-table th {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .signals-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .signals-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .signal-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .signal-bar {
+            width: 60px;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .signal-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-purple));
+            transition: width 500ms ease;
+        }
+
+        .signal-percentage {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        /* Reasoning Section */
+        .reasoning {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            line-height: 1.8;
+            margin-top: 20px;
+        }
+
+        .reasoning-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .reasoning-text {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .reasoning-highlight {
+            color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        /* Next Actions */
+        .actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .action-item {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-purple);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-number {
+            font-weight: 700;
+            color: var(--accent-purple);
+            flex-shrink: 0;
+        }
+
+        .action-content {
+            flex: 1;
+        }
+
+        .action-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .action-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Lead Info */
+        .lead-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .main {
+                margin-left: 60px;
+                padding: 24px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .lead-info {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 500ms ease forwards;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 100ms;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 200ms;
+        }
+
+        .card:nth-child(4) {
+            animation-delay: 300ms;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Apex</div>
+            </div>
+            <nav>
+                <a href="account_dashboard_premium.html" class="nav-link">Dashboard</a>
+                <a href="batch_import.html" class="nav-link">Batch Import</a>
+                <a href="custom_fields.html" class="nav-link">Custom Fields</a>
+                <a href="#" class="nav-link active">Scoring</a>
+                <a href="#" class="nav-link">Email Tracking</a>
+                <a href="#" class="nav-link">Slack</a>
+                <a href="#" class="nav-link">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Sarah Chen</h1>
+                    <p>VP of Operations at TechVenture Labs · Score updated 2 hours ago</p>
+                </div>
+                <button class="btn btn-secondary">← Back to Leads</button>
+            </div>
+
+            <div class="content">
+                <!-- Score Card -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">🎯</div>
+                        Confidence Score
+                    </div>
+
+                    <div class="lead-info">
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">sarah.chen@techventure.io</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Company</span>
+                            <span class="info-value">TechVenture Labs</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Vertical</span>
+                            <span class="info-value">SaaS</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Title</span>
+                            <span class="info-value">VP of Operations</span>
+                        </div>
+                    </div>
+
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <div class="score-inner">
+                                <div class="score-value">87</div>
+                                <div class="score-label">Score</div>
+                            </div>
+                        </div>
+                        <div class="score-grade grade-hot">🔥 HOT LEAD</div>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 12px;">
+                            In top 12% of all leads this week
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Signal Breakdown -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">📊</div>
+                        Signal Breakdown
+                    </div>
+
+                    <table class="signals-table">
+                        <thead>
+                            <tr>
+                                <th>Signal</th>
+                                <th>Weight</th>
+                                <th>Value</th>
+                                <th>Contribution</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="signal-name">Email Engagement</td>
+                                <td>25%</td>
+                                <td>
+                                    <div class="signal-bar">
+                                        <div class="signal-fill" style="width: 90%;"></div>
+                                    </div>
+                                </td>
+                                <td class="signal-percentage">+22.5</td>
+                            </tr>
+                            <tr>
+                                <td class="signal-name">Website Activity</td>
+                                <td>20%</td>
+                                <td>
+                                    <div class="signal-bar">
+                                        <div class="signal-fill" style="width: 75%;"></div>
+                                    </div>
+                                </td>
+                                <td class="signal-percentage">+15</td>
+                            </tr>
+                            <tr>
+                                <td class="signal-name">Company Fit</td>
+                                <td>20%</td>
+                                <td>
+                                    <div class="signal-bar">
+                                        <div class="signal-fill" style="width: 85%;"></div>
+                                    </div>
+                                </td>
+                                <td class="signal-percentage">+17</td>
+                            </tr>
+                            <tr>
+                                <td class="signal-name">Title Relevance</td>
+                                <td>15%</td>
+                                <td>
+                                    <div class="signal-bar">
+                                        <div class="signal-fill" style="width: 80%;"></div>
+                                    </div>
+                                </td>
+                                <td class="signal-percentage">+12</td>
+                            </tr>
+                            <tr>
+                                <td class="signal-name">Time Decay Multiplier</td>
+                                <td>20%</td>
+                                <td>
+                                    <div class="signal-bar">
+                                        <div class="signal-fill" style="width: 100%;"></div>
+                                    </div>
+                                </td>
+                                <td class="signal-percentage">+20.5</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- AI Reasoning -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">🤖</div>
+                        AI Reasoning
+                    </div>
+
+                    <div class="reasoning">
+                        <div class="reasoning-title">
+                            Why is this a hot lead?
+                        </div>
+                        <div class="reasoning-text">
+                            <p>Sarah Chen shows strong purchase intent signals. She opened 8 of 10 marketing emails in the past 14 days (<span class="reasoning-highlight">Email Engagement: 90%</span>), visited your pricing page 3 times (<span class="reasoning-highlight">Website Activity: 75%</span>), and her title as VP of Operations indicates decision-making authority in SaaS-vertical ops workflows (<span class="reasoning-highlight">Title Relevance: 80%</span>). TechVenture Labs is a <span class="reasoning-highlight">high-fit SaaS company</span> (Series B, 50-200 employees) that matches your ideal customer profile perfectly (<span class="reasoning-highlight">Company Fit: 85%</span>). The combination of high behavioral signals + strong fit profile creates a score of 87, placing her in the top 12% of leads this week.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Actions -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">✅</div>
+                        Recommended Next Actions
+                    </div>
+
+                    <div class="actions-list">
+                        <div class="action-item">
+                            <div class="action-number">1</div>
+                            <div class="action-content">
+                                <div class="action-title">Schedule Discovery Call</div>
+                                <div class="action-desc">Sarah shows high intent — reach out within 2 hours for maximum conversion</div>
+                            </div>
+                        </div>
+                        <div class="action-item">
+                            <div class="action-number">2</div>
+                            <div class="action-content">
+                                <div class="action-title">Personalize Demo</div>
+                                <div class="action-desc">Focus on ops automation & team collaboration features based on her title</div>
+                            </div>
+                        </div>
+                        <div class="action-item">
+                            <div class="action-number">3</div>
+                            <div class="action-content">
+                                <div class="action-title">Prepare Case Study</div>
+                                <div class="action-desc">Share relevant SaaS case study (she visited pricing page 3x — serious buyer)</div>
+                            </div>
+                        </div>
+                        <div class="action-item">
+                            <div class="action-number">4</div>
+                            <div class="action-content">
+                                <div class="action-title">Set 30-Day Follow-up</div>
+                                <div class="action-desc">If no conversion, send case study + social proof at day 15</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

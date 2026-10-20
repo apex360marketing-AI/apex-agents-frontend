@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batch Import — Apex Agents</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-primary: #9D4EDD;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            transition: all 250ms ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--accent-purple);
+            background: var(--bg-tertiary);
+        }
+
+        .nav-link.active {
+            color: var(--text-primary);
+            border-left-color: var(--accent-pink);
+            background: var(--bg-tertiary);
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 250ms ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), #c724ff);
+            color: white;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.5), 0 0 40px rgba(199, 36, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        /* Content Grid */
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: all 250ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.15);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple);
+            font-size: 16px;
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            transition: all 250ms ease;
+            cursor: pointer;
+            background: rgba(0, 217, 255, 0.02);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.05);
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Column Mapping */
+        .mapping-section {
+            margin-top: 24px;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .mapping-field {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .mapping-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .mapping-select {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .mapping-select:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        /* Preview Table */
+        .preview-table {
+            margin-top: 24px;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .table th {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Progress Section */
+        .progress-section {
+            grid-column: 1 / -1;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), #c724ff);
+            border-radius: 4px;
+            transition: width 300ms ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-processing {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        /* Summary Stats */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding: 12px 0;
+            }
+
+            .nav-link {
+                padding: 12px;
+                text-align: center;
+                font-size: 0;
+            }
+
+            .nav-link::before {
+                content: '→';
+                font-size: 18px;
+            }
+
+            .main {
+                margin-left: 60px;
+                padding: 24px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .mapping-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 500ms ease forwards;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 100ms;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 200ms;
+        }
+
+        .card:nth-child(4) {
+            animation-delay: 300ms;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Apex</div>
+            </div>
+            <nav>
+                <a href="account_dashboard_premium.html" class="nav-link">Dashboard</a>
+                <a href="batch_import.html" class="nav-link active">Batch Import</a>
+                <a href="#" class="nav-link">Custom Fields</a>
+                <a href="#" class="nav-link">Scoring</a>
+                <a href="#" class="nav-link">Email Tracking</a>
+                <a href="#" class="nav-link">Slack</a>
+                <a href="#" class="nav-link">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h1 class="page-title">Batch Import Leads</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="downloadTemplate()">Download Template</button>
+                    <button class="btn btn-primary" onclick="triggerFileInput()">Upload CSV</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Upload Section -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">📤</div>
+                        Upload Your CSV
+                    </div>
+                    <div class="upload-zone" id="uploadZone" onclick="triggerFileInput()">
+                        <div class="upload-icon">⬆️</div>
+                        <div class="upload-text">Drag & drop your CSV here</div>
+                        <div class="upload-hint">or click to browse (Max 10,000 leads per upload)</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Column Mapping -->
+                <div class="card">
+                    <div class="card-title">
+                        <div class="card-icon">🗂️</div>
+                        Map Your Columns
+                    </div>
+                    <div class="mapping-section">
+                        <div class="mapping-grid">
+                            <div class="mapping-field">
+                                <div class="mapping-label">Email</div>
+                                <select class="mapping-select">
+                                    <option>Select column...</option>
+                                    <option selected>Email</option>
+                                    <option>email_address</option>
+                                </select>
+                            </div>
+                            <div class="mapping-field">
+                                <div class="mapping-label">Name</div>
+                                <select class="mapping-select">
+                                    <option>Select column...</option>
+                                    <option selected>Name</option>
+                                    <option>full_name</option>
+                                </select>
+                            </div>
+                            <div class="mapping-field">
+                                <div class="mapping-label">Company</div>
+                                <select class="mapping-select">
+                                    <option>Select column...</option>
+                                    <option selected>Company</option>
+                                    <option>organization</option>
+                                </select>
+                            </div>
+                            <div class="mapping-field">
+                                <div class="mapping-label">Vertical</div>
+                                <select class="mapping-select">
+                                    <option>Select column...</option>
+                                    <option selected>saas</option>
+                                    <option>fintech</option>
+                                    <option>ecommerce</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-title">
+                        <div class="card-icon">👀</div>
+                        Preview (First 5 Rows)
+                    </div>
+                    <div class="preview-table">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Name</th>
+                                    <th>Company</th>
+                                    <th>Vertical</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>john@acme.com</td>
+                                    <td>John Smith</td>
+                                    <td>Acme Corp</td>
+                                    <td>SaaS</td>
+                                </tr>
+                                <tr>
+                                    <td>sarah@techco.io</td>
+                                    <td>Sarah Johnson</td>
+                                    <td>TechCo</td>
+                                    <td>Fintech</td>
+                                </tr>
+                                <tr>
+                                    <td>mike@ecom.com</td>
+                                    <td>Mike Wilson</td>
+                                    <td>EcomPro</td>
+                                    <td>E-commerce</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--text-secondary);">...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="card progress-section">
+                    <div class="card-title">
+                        <div class="card-icon">⚡</div>
+                        Import Progress
+                    </div>
+                    <span class="status-badge status-processing">Processing...</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>650 of 1,000 leads processed</span>
+                        <span>~2 minutes remaining</span>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">1,000</div>
+                            <div class="stat-label">Total Leads</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">650</div>
+                            <div class="stat-label">Processed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">3</div>
+                            <div class="stat-label">Errors</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        function triggerFileInput() {
+            fileInput.click();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const csv = e.target.result;
+                const lines = csv.split('\n').slice(0, 6);
+                console.log('File loaded:', file.name, lines);
+            };
+            reader.readAsText(file);
+        }
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type === 'text/csv') {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect({ target: { files: [file] } });
+            }
+        });
+
+        function downloadTemplate() {
+            const csv = 'email,name,company,vertical\njohn@example.com,John Doe,Example Corp,saas';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'apex-batch-import-template.csv';
+            a.click();
+        }
+    </script>
+</body>
+</html>

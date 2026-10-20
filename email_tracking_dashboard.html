@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Tracking — Apex Agents</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-platinum: #e5e4e2;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            transition: all 250ms ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            border-left-color: var(--accent-purple);
+            background: var(--bg-tertiary);
+        }
+
+        .nav-link.active {
+            color: var(--text-primary);
+            border-left-color: var(--accent-pink);
+            background: var(--bg-tertiary);
+        }
+
+        /* Main */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 250ms ease;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(157, 78, 221, 0.1);
+        }
+
+        /* Content */
+        .content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: all 250ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.15);
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            color: var(--success);
+        }
+
+        /* Chart Card */
+        .chart-card {
+            grid-column: 1 / 3;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple);
+            font-size: 14px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Tables */
+        .table-card {
+            grid-column: 1 / -1;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .table th {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .email-subject {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .metric-bar {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .bar {
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-purple));
+            border-radius: 2px;
+            flex: 1;
+            max-width: 100px;
+        }
+
+        .bar-value {
+            font-weight: 600;
+            color: var(--accent-purple);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-sent {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-test {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        /* A/B Test Results */
+        .ab-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .ab-variant {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .variant-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-purple);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .variant-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-purple);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .content {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chart-card {
+                grid-column: 1 / 3;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+            }
+
+            .main {
+                margin-left: 60px;
+                padding: 24px;
+            }
+
+            .ab-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 500ms ease forwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0ms; }
+        .card:nth-child(2) { animation-delay: 50ms; }
+        .card:nth-child(3) { animation-delay: 100ms; }
+        .card:nth-child(4) { animation-delay: 150ms; }
+        .card:nth-child(5) { animation-delay: 200ms; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Apex</div>
+            </div>
+            <nav>
+                <a href="account_dashboard_premium.html" class="nav-link">Dashboard</a>
+                <a href="batch_import.html" class="nav-link">Batch Import</a>
+                <a href="custom_fields.html" class="nav-link">Custom Fields</a>
+                <a href="scoring_breakdown.html" class="nav-link">Scoring</a>
+                <a href="#" class="nav-link active">Email Tracking</a>
+                <a href="#" class="nav-link">Slack</a>
+                <a href="#" class="nav-link">Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h1 class="page-title">Email Performance</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Export Report</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <button class="filter-btn active">All Time</button>
+                <button class="filter-btn">Last 30 Days</button>
+                <button class="filter-btn">Last 7 Days</button>
+                <button class="filter-btn">Today</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="content">
+                <div class="card stat-card">
+                    <div class="stat-label">Emails Sent</div>
+                    <div class="stat-value">4,521</div>
+                    <div class="stat-change">↑ 12% from last period</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-label">Open Rate</div>
+                    <div class="stat-value">34.2%</div>
+                    <div class="stat-change">↑ 2.1% improvement</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-label">Click Rate</div>
+                    <div class="stat-value">8.7%</div>
+                    <div class="stat-change">↑ 1.3% improvement</div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="stat-label">Conversions</div>
+                    <div class="stat-value">47</div>
+                    <div class="stat-change">↑ 3 conversions (6.8%)</div>
+                </div>
+
+                <!-- Chart -->
+                <div class="card chart-card">
+                    <div class="chart-title">
+                        <div class="chart-icon">📈</div>
+                        Opens & Clicks Over Time
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- A/B Testing -->
+                <div class="card chart-card">
+                    <div class="chart-title">
+                        <div class="chart-icon">🧪</div>
+                        A/B Test Results
+                    </div>
+                    <div class="ab-grid">
+                        <div class="ab-variant">
+                            <div class="variant-label">Variant A (Winner 🏆)</div>
+                            <div class="variant-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">Open Rate</div>
+                                    <div class="metric-value">38.5%</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Click Rate</div>
+                                    <div class="metric-value">10.2%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ab-variant">
+                            <div class="variant-label">Variant B</div>
+                            <div class="variant-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-label">Open Rate</div>
+                                    <div class="metric-value">29.8%</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-label">Click Rate</div>
+                                    <div class="metric-value">7.1%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email List -->
+            <div class="card table-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-title" style="margin: 0;">
+                        <div class="chart-icon">📧</div>
+                        Recent Emails
+                    </div>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Sent</th>
+                            <th>Status</th>
+                            <th style="text-align: center;">Opens</th>
+                            <th style="text-align: center;">Clicks</th>
+                            <th style="text-align: center;">Conversions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="email-subject">Limited Time: 40% Off Annual Plans</td>
+                            <td>2 hours ago</td>
+                            <td><span class="status-badge status-sent">Sent</span></td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">287</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">42</div>
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600; color: var(--accent-purple);">5</td>
+                        </tr>
+                        <tr>
+                            <td class="email-subject">Your Free Lead Score Report is Ready</td>
+                            <td>1 day ago</td>
+                            <td><span class="status-badge status-sent">Sent</span></td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">156</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">28</div>
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600; color: var(--accent-purple);">3</td>
+                        </tr>
+                        <tr>
+                            <td class="email-subject">[A/B Test] "Hot Leads Waiting" vs "Your Top Opportunities"</td>
+                            <td>3 days ago</td>
+                            <td><span class="status-badge status-test">A/B Test</span></td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">412</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">61</div>
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600; color: var(--accent-purple);">8</td>
+                        </tr>
+                        <tr>
+                            <td class="email-subject">Case Study: SaaS Startup Cuts Sales Cycle by 40%</td>
+                            <td>5 days ago</td>
+                            <td><span class="status-badge status-sent">Sent</span></td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">198</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="metric-bar">
+                                    <div class="bar"></div>
+                                    <div class="bar-value">34</div>
+                                </div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600; color: var(--accent-purple);">4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'Opens',
+                        data: [320, 380, 295, 420, 385, 290, 310],
+                        borderColor: '#9d4edd',
+                        backgroundColor: 'rgba(0, 217, 255, 0.05)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#9d4edd',
+                        pointBorderColor: '#0a0a0f',
+                        pointBorderWidth: 2,
+                    },
+                    {
+                        label: 'Clicks',
+                        data: [45, 52, 38, 65, 54, 35, 48],
+                        borderColor: '#9d4edd',
+                        backgroundColor: 'rgba(157, 78, 221, 0.05)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#9d4edd',
+                        pointBorderColor: '#0a0a0f',
+                        pointBorderWidth: 2,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#8e8e93',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#8e8e93', font: { size: 11 } },
+                        grid: { color: 'rgba(42, 42, 53, 0.3)' }
+                    },
+                    x: {
+                        ticks: { color: '#8e8e93', font: { size: 11 } },
+                        grid: { color: 'rgba(42, 42, 53, 0.3)' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

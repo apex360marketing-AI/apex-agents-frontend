@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI Calculator — Apex Agents</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1c1c26;
+            --text-primary: #e5e4e2;
+            --text-secondary: #8e8e93;
+            --accent-platinum: #e5e4e2;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff2d7a;
+            --border: #2a2a35;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 40px;
+            display: inline-block;
+        }
+
+        .page-title {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            backdrop-filter: blur(10px);
+            transition: all 250ms ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.15);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(157, 78, 221, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-purple);
+            font-size: 18px;
+        }
+
+        /* Input Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 250ms ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.1);
+        }
+
+        .input-suffix {
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: 8px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.3);
+            transition: all 200ms ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.5);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(157, 78, 221, 0.3);
+        }
+
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .result-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .result-unit {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Chart Section */
+        .chart-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .chart-container {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 16px;
+            height: 300px;
+            position: relative;
+        }
+
+        /* Summary */
+        .summary-section {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(157, 78, 221, 0.1));
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .summary-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--accent-purple);
+        }
+
+        .summary-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .highlight {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .benefit-bullet {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        .benefit-icon {
+            color: var(--accent-purple);
+            font-weight: 700;
+        }
+
+        /* CTA */
+        .cta-section {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(157, 78, 221, 0.05));
+            border: 1px solid var(--accent-purple);
+            border-radius: 12px;
+        }
+
+        .cta-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .cta-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--accent-purple), #c724ff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 250ms ease;
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+            display: inline-block;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 30px rgba(157, 78, 221, 0.5), 0 0 40px rgba(199, 36, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                padding: 40px 20px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .container {
+                gap: 20px;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideInUp 500ms ease forwards;
+        }
+
+        .card:nth-child(n+2) {
+            animation-delay: 100ms;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div class="logo">Apex</div>
+            <h1 class="page-title">Calculate Your ROI</h1>
+            <p class="page-subtitle">See how much revenue Apex Agents can unlock for your business</p>
+        </div>
+
+        <div class="container">
+            <!-- Input Card -->
+            <div class="card">
+                <div class="card-title">
+                    <div class="card-icon">⚙️</div>
+                    Your Numbers
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Monthly Leads</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="monthlyLeads" class="form-input" value="500" min="10" max="100000" onchange="updateCalc()">
+                            <span class="input-suffix">leads</span>
+                        </div>
+                        <input type="range" id="leadsSlider" class="slider" value="500" min="10" max="50000" oninput="document.getElementById('monthlyLeads').value = this.value; updateCalc()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Average Deal Size</label>
+                        <div class="input-wrapper">
+                            <span style="color: var(--text-secondary);">$</span>
+                            <input type="number" id="dealSize" class="form-input" value="5000" min="100" max="1000000" onchange="updateCalc()">
+                            <span class="input-suffix">USD</span>
+                        </div>
+                        <input type="range" id="dealSlider" class="slider" value="5000" min="100" max="100000" oninput="document.getElementById('dealSize').value = this.value; updateCalc()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Current Conversion Rate</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="conversionRate" class="form-input" value="2" min="0.1" max="50" step="0.1" onchange="updateCalc()">
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <input type="range" id="conversionSlider" class="slider" value="2" min="0.1" max="30" step="0.1" oninput="document.getElementById('conversionRate').value = this.value; updateCalc()">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Target Improvement</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="improvement" class="form-input" value="40" min="5" max="500" onchange="updateCalc()">
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <input type="range" id="improvementSlider" class="slider" value="40" min="5" max="300" oninput="document.getElementById('improvement').value = this.value; updateCalc()">
+                    </div>
+
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Annual Revenue</div>
+                            <div class="result-value" id="annualRevenue">$600K</div>
+                            <div class="result-unit">current baseline</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">With Apex</div>
+                            <div class="result-value" id="projectedRevenue">$840K</div>
+                            <div class="result-unit">projected yearly</div>
+                        </div>
+                    </div>
+
+                    <div class="summary-section" style="grid-column: 1 / -1; margin-top: 0;">
+                        <div class="summary-title">💡 ROI Impact</div>
+                        <div class="summary-text">
+                            By improving your conversion rate from <span class="highlight" id="summaryOldRate">2%</span> to <span class="highlight" id="summaryNewRate">2.8%</span>, you'll gain an additional <span class="highlight" id="summaryRevenue">$240,000</span> in annual revenue with zero additional sales spend.
+                        </div>
+                        <div class="benefit-bullet">
+                            <span class="benefit-icon">✓</span>
+                            <span>Pays for itself in <span class="highlight" id="paybackPeriod">1.2 months</span></span>
+                        </div>
+                        <div class="benefit-bullet">
+                            <span class="benefit-icon">✓</span>
+                            <span><span class="highlight">40%</span> improvement in conversion efficiency</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="card">
+                <div class="card-title">
+                    <div class="card-icon">📈</div>
+                    Revenue Impact (Yearly)
+                </div>
+
+                <div class="chart-section">
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+
+                    <div class="summary-section">
+                        <div class="summary-title">📊 Cost Breakdown</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                            <div style="font-size: 12px; padding: 8px; background: rgba(157, 78, 221, 0.1); border-radius: 4px;">
+                                <div style="color: var(--text-secondary); font-size: 11px; margin-bottom: 4px;">APEX COST</div>
+                                <div style="color: var(--accent-purple); font-weight: 700; font-size: 16px;" id="apexCost">$1,200</div>
+                            </div>
+                            <div style="font-size: 12px; padding: 8px; background: rgba(0, 217, 255, 0.1); border-radius: 4px;">
+                                <div style="color: var(--text-secondary); font-size: 11px; margin-bottom: 4px;">NET GAIN</div>
+                                <div style="color: var(--accent-purple); font-weight: 700; font-size: 16px;" id="netGain">$238,800</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-section">
+                <h2 class="cta-title">Ready to Unlock This Revenue?</h2>
+                <p class="cta-subtitle">Start your free 14-day trial. No credit card required.</p>
+                <a href="signup_form_premium.html" class="btn">Get Started Now →</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+
+        function updateCalc() {
+            const monthlyLeads = parseFloat(document.getElementById('monthlyLeads').value) || 500;
+            const dealSize = parseFloat(document.getElementById('dealSize').value) || 5000;
+            const currentRate = parseFloat(document.getElementById('conversionRate').value) || 2;
+            const improvement = parseFloat(document.getElementById('improvement').value) || 40;
+
+            // Calculate metrics
+            const annualLeads = monthlyLeads * 12;
+            const currentRevenue = (annualLeads * (currentRate / 100) * dealSize);
+            const newRate = currentRate * (1 + improvement / 100);
+            const projectedRevenue = (annualLeads * (newRate / 100) * dealSize);
+            const additionalRevenue = projectedRevenue - currentRevenue;
+            const apexCost = 100; // Monthly = $1,200 yearly
+            const netGain = (additionalRevenue * 12) - (apexCost * 12);
+            const paybackMonths = (apexCost * 12) / (additionalRevenue / 12);
+
+            // Update displays
+            document.getElementById('annualRevenue').textContent = '$' + Math.round(currentRevenue / 1000) + 'K';
+            document.getElementById('projectedRevenue').textContent = '$' + Math.round(projectedRevenue / 1000) + 'K';
+            document.getElementById('apexCost').textContent = '$' + Math.round(apexCost * 12).toLocaleString();
+            document.getElementById('netGain').textContent = '$' + Math.round(netGain).toLocaleString();
+            document.getElementById('summaryOldRate').textContent = currentRate.toFixed(1) + '%';
+            document.getElementById('summaryNewRate').textContent = newRate.toFixed(1) + '%';
+            document.getElementById('summaryRevenue').textContent = '$' + Math.round(additionalRevenue * 12).toLocaleString();
+            document.getElementById('paybackPeriod').textContent = paybackMonths.toFixed(1) + ' months';
+
+            // Update chart
+            updateChart(currentRevenue, projectedRevenue, additionalRevenue);
+
+            // Sync sliders
+            document.getElementById('leadsSlider').value = monthlyLeads;
+            document.getElementById('dealSlider').value = dealSize;
+            document.getElementById('conversionSlider').value = currentRate;
+            document.getElementById('improvementSlider').value = improvement;
+        }
+
+        function updateChart(current, projected, additional) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Current', 'Apex Impact', 'Projected Total'],
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: [current, additional, projected],
+                            backgroundColor: [
+                                'rgba(142, 142, 147, 0.5)',
+                                'rgba(0, 217, 255, 0.5)',
+                                'rgba(157, 78, 221, 0.7)'
+                            ],
+                            borderColor: [
+                                '#8e8e93',
+                                '#9d4edd',
+                                '#9d4edd'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#8e8e93', font: { size: 11 } },
+                            grid: { color: 'rgba(42, 42, 53, 0.3)' },
+                            beginAtZero: true
+                        },
+                        y: {
+                            ticks: { color: '#8e8e93', font: { size: 12 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        updateCalc();
+    </script>
+</body>
+</html>

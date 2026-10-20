@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Agents - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-dark: #0A0A0F;
+            --secondary-dark: #13131A;
+            --tertiary-dark: #1C1C26;
+            --accent-primary: #9D4EDD;
+            --accent-purple: #9d4edd;
+            --accent-pink: #FF2D7A;
+            --accent-green: #00d977;
+            --text-primary: #e8e8f0;
+            --text-secondary: #b0b0c0;
+            --text-muted: #808090;
+            --border-color: #2a2a3e;
+            --hover-bg: rgba(26, 26, 46, 0.6);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--tertiary-dark) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* LAYOUT */
+        .dashboard-wrapper {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background: var(--secondary-dark);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 260px;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            margin-bottom: 3rem;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--accent-purple);
+        }
+
+        .sidebar-nav a.active {
+            border-left: 3px solid var(--accent-purple);
+            padding-left: calc(1rem - 3px);
+        }
+
+        .sidebar-stats {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(157, 78, 221, 0.1));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-stat {
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .top-bar-title h1 {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .top-bar-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            color: var(--primary-dark);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent-purple);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+            border-color: var(--accent-purple);
+        }
+
+        /* METRICS GRID */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.4), rgba(22, 33, 62, 0.4));
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.8), rgba(22, 33, 62, 0.8));
+            border-color: var(--accent-purple);
+            transform: translateY(-3px);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.85rem;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .metric-change.negative {
+            color: var(--accent-pink);
+        }
+
+        /* CHARTS SECTION */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.4), rgba(22, 33, 62, 0.4));
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+
+        .chart-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+
+        /* LEADS TABLE */
+        .leads-section {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.4), rgba(22, 33, 62, 0.4));
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .leads-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .leads-header h3 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leads-table thead th {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem 1.5rem;
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .leads-table tbody tr {
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s ease;
+        }
+
+        .leads-table tbody tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+
+        .leads-table td {
+            padding: 1rem 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .lead-score {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(157, 78, 221, 0.2));
+            color: var(--accent-purple);
+        }
+
+        .lead-score.hot {
+            background: linear-gradient(135deg, rgba(255, 0, 110, 0.2), rgba(255, 0, 110, 0.1));
+            color: var(--accent-pink);
+        }
+
+        .lead-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lead-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .lead-action-btn:hover {
+            background: var(--hover-bg);
+            color: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        /* API KEY SECTION */
+        .api-key-section {
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.4), rgba(22, 33, 62, 0.4));
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .api-key-section h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .api-key-display {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .api-key-value {
+            font-family: 'Monaco', 'Menlo', monospace;
+            color: var(--accent-purple);
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .api-key-copy {
+            background: var(--accent-purple);
+            color: var(--primary-dark);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .api-key-copy:hover {
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+        }
+
+        .api-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 1rem;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .sidebar-nav {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                margin-bottom: 1rem;
+            }
+
+            .top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .top-bar-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+
+            .leads-table td,
+            .leads-table th {
+                padding: 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">⚡ APEX</div>
+
+            <nav class="sidebar-nav">
+                <li><a href="#" class="active">📊 Dashboard</a></li>
+                <li><a href="#">📈 Leads</a></li>
+                <li><a href="#">📤 Batch Import</a></li>
+                <li><a href="#">🔧 Custom Fields</a></li>
+                <li><a href="#">📧 Email Tracking</a></li>
+                <li><a href="#">⚙️ Settings</a></li>
+            </nav>
+
+            <div class="sidebar-stats">
+                <div class="sidebar-stat">
+                    <div class="sidebar-stat-label">API Calls Used</div>
+                    <div class="sidebar-stat-value">287 / 1000</div>
+                </div>
+                <div class="sidebar-stat">
+                    <div class="sidebar-stat-label">Trial Days Left</div>
+                    <div class="sidebar-stat-value">27</div>
+                </div>
+                <div class="sidebar-stat">
+                    <div class="sidebar-stat-label">Hot Leads</div>
+                    <div class="sidebar-stat-value">12</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <!-- TOP BAR -->
+            <div class="top-bar">
+                <div class="top-bar-title">
+                    <h1>Welcome back, Sarah</h1>
+                    <p>Your trial is active • 27 days remaining</p>
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn btn-primary">↓ Import Leads</button>
+                    <button class="btn btn-secondary">⚙️ Settings</button>
+                </div>
+            </div>
+
+            <!-- METRICS GRID -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Total Leads</span>
+                        <div class="metric-icon">📊</div>
+                    </div>
+                    <div class="metric-value">847</div>
+                    <div class="metric-change">↑ 45 this week</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Hot Leads (75+)</span>
+                        <div class="metric-icon">🔥</div>
+                    </div>
+                    <div class="metric-value">124</div>
+                    <div class="metric-change">↑ 18 this week</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Avg Score</span>
+                        <div class="metric-icon">⭐</div>
+                    </div>
+                    <div class="metric-value">62</div>
+                    <div class="metric-change">↑ 3 points this week</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Conversion Rate</span>
+                        <div class="metric-icon">✓</div>
+                    </div>
+                    <div class="metric-value">18%</div>
+                    <div class="metric-change">↑ 2% this week</div>
+                </div>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h3>Score Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Vertical Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="verticalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT LEADS -->
+            <div class="leads-section">
+                <div class="leads-header">
+                    <h3>Recent Hot Leads</h3>
+                </div>
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Contact</th>
+                            <th>Company</th>
+                            <th>Vertical</th>
+                            <th>Score</th>
+                            <th>Last Activity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Sarah Chen</strong></td>
+                            <td>TechCorp</td>
+                            <td>SaaS</td>
+                            <td><span class="lead-score hot">87</span></td>
+                            <td>Today, 2:30 PM</td>
+                            <td>
+                                <div class="lead-actions">
+                                    <button class="lead-action-btn" title="View details">👁️</button>
+                                    <button class="lead-action-btn" title="Email">📧</button>
+                                    <button class="lead-action-btn" title="Call">☎️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Michael Rodriguez</strong></td>
+                            <td>FinScale</td>
+                            <td>Fintech</td>
+                            <td><span class="lead-score hot">85</span></td>
+                            <td>Today, 10:15 AM</td>
+                            <td>
+                                <div class="lead-actions">
+                                    <button class="lead-action-btn" title="View details">👁️</button>
+                                    <button class="lead-action-btn" title="Email">📧</button>
+                                    <button class="lead-action-btn" title="Call">☎️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Emma Watson</strong></td>
+                            <td>ShopHub</td>
+                            <td>E-commerce</td>
+                            <td><span class="lead-score hot">82</span></td>
+                            <td>Yesterday, 4:45 PM</td>
+                            <td>
+                                <div class="lead-actions">
+                                    <button class="lead-action-btn" title="View details">👁️</button>
+                                    <button class="lead-action-btn" title="Email">📧</button>
+                                    <button class="lead-action-btn" title="Call">☎️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>David Park</strong></td>
+                            <td>CloudFirst Inc</td>
+                            <td>SaaS</td>
+                            <td><span class="lead-score hot">81</span></td>
+                            <td>Yesterday, 1:20 PM</td>
+                            <td>
+                                <div class="lead-actions">
+                                    <button class="lead-action-btn" title="View details">👁️</button>
+                                    <button class="lead-action-btn" title="Email">📧</button>
+                                    <button class="lead-action-btn" title="Call">☎️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- API KEY SECTION -->
+            <div class="api-key-section">
+                <h3>Your API Key</h3>
+                <div class="api-key-display">
+                    <div class="api-key-value">apx_sk_live_7c2k9j2k9j2k9j2k9j2k9j2k</div>
+                    <button class="api-key-copy">Copy</button>
+                </div>
+                <div class="api-info">
+                    ✓ Use this key for API authentication<br>
+                    ✓ Never share your key in public repositories<br>
+                    ✓ Regenerate anytime in Settings
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Score Distribution Chart
+        const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(scoreCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-20', '20-40', '40-60', '60-80', '80-100'],
+                datasets: [{
+                    label: 'Leads by Score Range',
+                    data: [45, 120, 280, 310, 92],
+                    backgroundColor: [
+                        'rgba(155, 89, 182, 0.5)',
+                        'rgba(155, 78, 221, 0.6)',
+                        'rgba(0, 217, 255, 0.5)',
+                        'rgba(0, 217, 255, 0.7)',
+                        'rgba(255, 0, 110, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(155, 78, 221, 1)',
+                        'rgba(157, 78, 221, 1)',
+                        'rgba(0, 217, 255, 1)',
+                        'rgba(0, 217, 255, 1)',
+                        'rgba(255, 0, 110, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#b0b0c0' }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#b0b0c0' },
+                        grid: { color: 'rgba(42, 42, 62, 0.3)' }
+                    },
+                    x: {
+                        ticks: { color: '#b0b0c0' },
+                        grid: { color: 'rgba(42, 42, 62, 0.3)' }
+                    }
+                }
+            }
+        });
+
+        // Vertical Breakdown Chart
+        const verticalCtx = document.getElementById('verticalChart').getContext('2d');
+        new Chart(verticalCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['SaaS', 'Fintech', 'E-commerce'],
+                datasets: [{
+                    data: [480, 220, 147],
+                    backgroundColor: [
+                        'rgba(0, 217, 255, 0.7)',
+                        'rgba(157, 78, 221, 0.7)',
+                        'rgba(255, 0, 110, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(0, 217, 255, 1)',
+                        'rgba(157, 78, 221, 1)',
+                        'rgba(255, 0, 110, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#b0b0c0' }
+                    }
+                }
+            }
+        });
+
+        // Copy API key
+        document.querySelector('.api-key-copy').addEventListener('click', function() {
+            const key = document.querySelector('.api-key-value').textContent;
+            navigator.clipboard.writeText(key);
+            this.textContent = 'Copied!';
+            setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+        });
+    </script>
+</body>
+</html>
